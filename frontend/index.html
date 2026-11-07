@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#eef5ff">
+  <title>RoamTO | Your AI Companion for Starting Life in Toronto</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="/app.js" defer></script>
+</head>
+<body data-page="home">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="RoamTO home"><span class="brand-mark">R</span><span>RoamTO</span></a>
+    <nav class="auth-nav">
+      <a class="nav-link" href="/">Home</a>
+      <a id="auth-link" class="nav-link" href="/login.html">Log in / Register</a>
+      <span id="auth-user" class="nav-link" hidden></span>
+      <button id="logout-button" class="nav-link nav-button" type="button" hidden>Log out</button>
+    </nav>
+  </header>
+  <main class="page-shell home-shell">
+    <section class="hero">
+      <p class="eyebrow">A little more at home, every day</p>
+      <h1>Your AI companion for starting life in Toronto.</h1>
+      <p class="hero-copy">Practical, personalized plans for the everyday things that make a new city feel like yours.</p>
+      <a class="button button-primary" href="#missions">Find your first step <span aria-hidden="true">↓</span></a>
+      <div class="hero-art" aria-hidden="true"><span class="sun"></span><span class="skyline">▥　⌂　▥　⌂　▥</span><span class="lake"></span></div>
+    </section>
+
+    <section id="missions" class="section-block">
+      <a id="pillar-back" class="back-link" href="/" hidden>← All pillars</a>
+      <div class="section-heading">
+        <div><p id="pillar-eyebrow" class="eyebrow">Start with a pillar</p><h2 id="pillar-heading">What would you like to focus on?</h2></div>
+        <p id="pillar-description">Choose an area of everyday life to see goals that fit.</p>
+      </div>
+      <div id="mission-groups" class="mission-groups" aria-live="polite">
+        <p class="muted">Loading pillars…</p>
+      </div>
+      <a id="custom-goal-card" class="custom-goal-card" href="/ai_plan.html?mission=custom">
+        <span class="custom-goal-icon" aria-hidden="true">✎</span>
+        <span><strong>Have another goal in mind?</strong><small>Describe it and get a plan made just for you.</small></span>
+        <span class="mission-arrow" aria-hidden="true">→</span>
+      </a>
+      <div id="home-error" class="notice notice-error" role="alert" hidden></div>
+    </section>
+    <footer class="footer"><span>Made for finding your footing in Toronto.</span><span>RoamTO · Demo prototype</span></footer>
+  </main>
+</body>
+</html>

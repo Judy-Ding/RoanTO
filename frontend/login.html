@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#eef5ff">
+  <title>Log in or register | RoamTO</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="/app.js" defer></script>
+</head>
+<body data-page="auth">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="RoamTO home"><span class="brand-mark">R</span><span>RoamTO</span></a>
+    <nav class="auth-nav">
+      <a class="nav-link" href="/">Home</a>
+      <a id="auth-link" class="nav-link" href="/login.html" hidden>Log in / Register</a>
+      <span id="auth-user" class="nav-link" hidden></span>
+      <button id="logout-button" class="nav-link nav-button" type="button" hidden>Log out</button>
+    </nav>
+  </header>
+  <main class="page-shell narrow-shell auth-shell">
+    <a class="back-link" href="/">← Back to RoamTO</a>
+    <section class="auth-card panel">
+      <p class="eyebrow">Your RoamTO account</p>
+      <h1 id="auth-heading">Welcome back</h1>
+      <p id="auth-description" class="muted">Log in to create and continue your personal plans.</p>
+      <div class="auth-tabs" role="tablist" aria-label="Account action">
+        <button id="login-tab" class="auth-tab active" type="button" role="tab" aria-selected="true">Log in</button>
+        <button id="register-tab" class="auth-tab" type="button" role="tab" aria-selected="false">Register</button>
+      </div>
+      <form id="auth-form" class="auth-form">
+        <label class="field"><span>Email</span><input id="auth-email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com"></label>
+        <label class="field"><span>Password</span><input id="auth-password" type="password" autocomplete="current-password" required minlength="6" maxlength="128" placeholder="At least 6 characters"></label>
+        <button id="auth-submit" class="button button-primary" type="submit">Log in</button>
+        <div id="auth-error" class="notice notice-error" role="alert" hidden></div>
+        <div id="auth-success" class="notice notice-success" role="status" hidden></div>
+      </form>
+      <p class="auth-footnote">Your account is managed securely by Firebase. Your saved plans are associated with your account.</p>
+    </section>
+  </main>
+</body>
+</html>
