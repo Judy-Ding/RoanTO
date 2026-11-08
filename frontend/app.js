@@ -35,8 +35,10 @@ async function initializeFirebase() {
     if (!window.firebase) {
       throw new Error("Firebase could not load. Check your internet connection and reload.");
     }
-    if (!firebase.apps.length) firebase.initializeApp(config);
+    const { authEmulatorUrl, ...firebaseConfig } = config;
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    if (authEmulatorUrl) auth.useEmulator(authEmulatorUrl, { disableWarnings: true });
     auth.onAuthStateChanged(showAuthNavigation);
     await new Promise((resolve, reject) => {
       const unsubscribe = auth.onAuthStateChanged(
@@ -104,14 +106,19 @@ function safeNextPath() {
 
 function firebaseErrorMessage(error) {
   const messages = {
-    "auth/configuration-not-found": "Firebase Authentication 尚未在这个项目中完成配置。请在 Firebase Console 打开 Authentication，点击 Get started，并在 Sign-in method 中启用 Email/Password。",
-    "auth/operation-not-allowed": "Firebase 项目尚未启用邮箱/密码登录。请到 Authentication → Sign-in method 启用 Email/Password。",
+    "auth/configuration-not-found": "Firebase Authentication is not set up for this project. In the Firebase Console open Authentication, click Get started, then enable Email/Password under Sign-in method.",
+    "auth/operation-not-allowed": "Email/password sign-in is not enabled. In the Firebase Console go to Authentication → Sign-in method and enable Email/Password.",
     "auth/email-already-in-use": "That email already has an account. Try logging in instead.",
     "auth/invalid-email": "Enter a valid email address.",
     "auth/invalid-credential": "Email or password is incorrect.",
     "auth/user-disabled": "This account has been disabled.",
     "auth/too-many-requests": "Too many attempts. Wait a little and try again.",
     "auth/weak-password": "Choose a stronger password, at least 6 characters long.",
+    "auth/invalid-api-key": "The Firebase API key in .env is invalid. Copy it again from Project settings → General.",
+    "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "The Firebase API key in .env is invalid. Copy it again from Project settings → General.",
+    "auth/unauthorized-domain": "This domain is not authorized. Add it under Authentication → Settings → Authorized domains.",
+    "auth/user-not-found": "Email or password is incorrect.",
+    "auth/wrong-password": "Email or password is incorrect.",
     "auth/network-request-failed": "Could not reach Firebase. Check your internet connection.",
   };
   return messages[error.code] || error.message || "Authentication failed. Please try again.";

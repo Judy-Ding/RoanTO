@@ -1,4 +1,7 @@
+import base64
+import json
 import os
+import time
 from typing import Annotated, Any
 
 from fastapi import Depends, HTTPException
@@ -26,7 +29,29 @@ def firebase_client_config() -> dict[str, str]:
                 "FIREBASE_PROJECT_ID, and FIREBASE_APP_ID in .env."
             ),
         )
+    emulator_host = _emulator_host()
+    if emulator_host:
+        config["authEmulatorUrl"] = f"http://{emulator_host}"
     return config
+
+
+def _emulator_host() -> str:
+    """Local-development switch: Firebase Auth emulator host, e.g. 127.0.0.1:9099."""
+    return os.getenv("FIREBASE_AUTH_EMULATOR_HOST", "").strip()
+
+
+def _verify_emulator_token(token: str, project_id: str) -> dict[str, Any]:
+    """The emulator issues unsigned tokens, so only check structure, audience and expiry."""
+    try:
+        payload = token.split(".")[1]
+        claims = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+    except (IndexError, ValueError) as exc:
+        raise ValueError("Malformed token") from exc
+    if claims.get("aud") != project_id:
+        raise ValueError("Wrong audience")
+    if claims.get("exp", 0) < time.time():
+        raise ValueError("Token expired")
+    return claims
 
 
 def require_user(
@@ -46,11 +71,17 @@ def require_user(
         )
 
     try:
-        claims = id_token.verify_firebase_token(
-            credentials.credentials,
-            Request(),
-            audience=project_id,
-        )
+        if _emulator_host():
+            claims = _verify_emulator_token(credentials.credentials, project_id)
+        else:
+            claims = id_token.verify_firebase_token(
+                credentials.credentials,
+                Request(),
+                audience=project_id,
+                clock_skew_in_seconds=10,
+            )
+        if claims.get("iss") != f"https://securetoken.google.com/{project_id}":
+            raise ValueError("Wrong token issuer")
     except (ValueError, GoogleAuthError) as exc:
         raise HTTPException(status_code=401, detail="Your session is invalid or expired. Sign in again.") from exc
 
