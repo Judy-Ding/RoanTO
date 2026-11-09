@@ -135,6 +135,7 @@ h1, h2 { font-family: Manrope, "DM Sans", sans-serif; letter-spacing: -.7px; }
 .saved-plan-copy { display: grid; flex: 1; min-width: 0; gap: 6px; }
 .saved-plan-copy strong { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .saved-plan-copy small { color: var(--muted); font-size: 12px; }
+.saved-plan-copy .demo-task-badge { width: fit-content; padding: 3px 8px; border-radius: 999px; color: var(--blue-dark); background: var(--blue-pale); font-weight: 700; }
 .saved-plan-copy .progress-track { height: 6px; }
 .empty-plans { margin-bottom: 18px; text-align: center; }
 .empty-plans-icon { margin: 0 auto 15px; }

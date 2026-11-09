@@ -232,5 +232,6 @@ class PlanRecord(APIModel):
     preferences: Preferences
     content: SavedPlanContent
     mission_completed: bool
+    is_demo: bool = False
     created_at: str
     updated_at: str

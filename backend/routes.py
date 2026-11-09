@@ -67,6 +67,12 @@ def list_saved_plans(user: CurrentUser):
     return database.list_plans(user["uid"])
 
 
+@router.post("/api/plans/demo-seed", response_model=list[PlanRecord])
+def seed_demo_plans(user: CurrentUser):
+    database.ensure_demo_plans(user["uid"])
+    return database.list_plans(user["uid"])
+
+
 @router.get("/api/plans/{plan_id}", response_model=PlanRecord)
 def retrieve_plan(plan_id: str, user: CurrentUser):
     plan = database.get_plan(plan_id, user["uid"])

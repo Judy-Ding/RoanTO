@@ -51,7 +51,7 @@ def test_config_503_when_unconfigured(client):
 
 def test_config_returns_public_fields_only(client, monkeypatch):
     configure(monkeypatch)
-    monkeypatch.setenv("LLM_API_KEY", "secret")
+    monkeypatch.setenv("GROQ_API_KEY", "secret")
     body = client.get("/api/auth/config").json()
     assert set(body) == {"apiKey", "authDomain", "projectId", "appId"}
 
@@ -84,6 +84,22 @@ def test_valid_token_ok_and_audience_passed(client, monkeypatch):
     monkeypatch.setattr(auth.id_token, "verify_firebase_token", ok)
     r = client.get("/api/plans", headers={"Authorization": "Bearer t"})
     assert r.status_code == 200 and r.json() == [] and seen["aud"] == PROJECT
+
+
+def test_demo_plans_are_seeded_once_for_each_user(client, monkeypatch):
+    configure(monkeypatch)
+    monkeypatch.setenv("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:9099")
+    headers = lambda uid: {"Authorization": f"Bearer {fake_token(claims(uid))}"}
+
+    first = client.post("/api/plans/demo-seed", headers=headers("a")).json()
+    second = client.post("/api/plans/demo-seed", headers=headers("a")).json()
+    other_user = client.post("/api/plans/demo-seed", headers=headers("b")).json()
+
+    assert len(first) == len(other_user) == 4
+    assert [plan["id"] for plan in first] == [plan["id"] for plan in second]
+    assert {plan["category"] for plan in first} == {"Navigate", "Settle", "Explore", "Connect"}
+    assert {plan["id"] for plan in first}.isdisjoint(plan["id"] for plan in other_user)
+    assert all(plan["is_demo"] for plan in first + other_user)
 
 
 def test_wrong_issuer_rejected(client, monkeypatch):
