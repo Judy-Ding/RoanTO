@@ -435,6 +435,9 @@ function renderSavedPlan(plan) {
   completePanel.classList.toggle("is-complete", plan.mission_completed);
   const completeButton = document.querySelector("#complete-button");
   completeButton.textContent = plan.mission_completed ? "Mission complete ✓" : "Mark mission complete";
+  document.querySelector("#saved-plan-eyebrow").textContent = plan.is_demo
+    ? "Demo task · preset, not AI-generated"
+    : "Your next steps";
   document.querySelector("#saved-plan").hidden = false;
   document.querySelector("#saved-loading").hidden = true;
 }
@@ -444,9 +447,7 @@ function renderSavedPlanList(plans) {
   if (!plans.length) {
     container.innerHTML = `<div class="empty-plans panel">
       <span class="empty-plans-icon" aria-hidden="true">✦</span>
-      <h2>Your plans will show up here</h2>
-      <p class="muted">Generate a plan for a goal you have, then save it to keep it with your account.</p>
-      <a class="button button-secondary" href="/">Explore goals</a>
+      <h2>No tasks available</h2>
     </div>`;
   } else {
     container.innerHTML = plans.map((plan) => {
@@ -458,6 +459,7 @@ function renderSavedPlanList(plans) {
         <span class="saved-plan-icon" aria-hidden="true">${CATEGORY_ICONS[plan.category] || "✦"}</span>
         <span class="saved-plan-copy">
           <strong>${escapeHTML(plan.mission_title)}</strong>
+          ${plan.is_demo ? '<small class="demo-task-badge">Demo task · preset</small>' : ""}
           <small>${escapeHTML(status)}</small>
           <span class="progress-track"><span style="width:${progress}%"></span></span>
         </span>
@@ -482,6 +484,7 @@ async function initializeSavedPlan() {
   if (!planId) {
     backLink.href = "/";
     try {
+      await api("/api/plans/demo-seed", { method: "POST" });
       const plans = await api("/api/plans");
       renderSavedPlanList(plans);
     } catch (caught) {

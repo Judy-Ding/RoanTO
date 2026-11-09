@@ -7,12 +7,10 @@ A small, mobile-first prototype for newcomers to turn an everyday Toronto goal i
 ## Requirements
 
 - Python 3.10+
-- A Google Gemini API key
+- A GroqCloud API key
 - A Firebase project with Email/Password sign-in enabled
 
-The default provider is Google Gemini. Create a key in [Google AI Studio](https://aistudio.google.com/apikey), copy `.env.example` to `.env`, and set `LLM_API_KEY`. The defaults use Gemini's OpenAI-compatible Chat Completions endpoint with `gemini-3.8-flash`; you can change `LLM_BASE_URL` and `LLM_MODEL` to another compatible provider/model.
-
-Google's [free tier](https://ai.google.dev/gemini-api/docs/pricing) has limits and only covers eligible models; check the current model eligibility, quota, and terms in AI Studio before use. Google says free-tier content may be used to improve its products, so don't enter sensitive personal details. The key stays on the backend and is never sent to the browser. AI generation and modification return a clear setup error if the key is missing; the app does not substitute sample AI responses.
+The AI provider is GroqCloud, called from the backend using its OpenAI-compatible Chat Completions API. Create a key in [GroqCloud](https://console.groq.com/keys), copy `.env.example` to `.env`, set `GROQ_API_KEY`, and restart the server. The default model is `openai/gpt-oss-120b`; set `GROQ_MODEL` to another model enabled for your GroqCloud account if needed. The key remains on the backend and is never sent to the browser. AI generation and modification return a clear setup error if the key is missing; the app does not substitute sample AI responses.
 
 ## Firebase authentication setup
 
@@ -33,11 +31,11 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-# Add Gemini and Firebase configuration to .env
+# Add your GroqCloud key and Firebase configuration to .env
 uvicorn main:app --reload
 ```
 
-Open [http://127.0.0.1:8000](http://127.0.0.1:8000). If using Windows, activate the virtual environment with `.venv\Scripts\activate`.
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). The FastAPI backend serves the existing frontend, so no separate frontend server is required. CORS is restricted to the local app and VS Code Live Server origins. If using Windows, activate the virtual environment with `.venv\Scripts\activate`.
 
 The SQLite database is created as `roamto.db` in this folder on first start. Override its location with `DATABASE_PATH` if needed. Do not put secrets in frontend files.
 
@@ -45,8 +43,8 @@ The SQLite database is created as `roamto.db` in this folder on first start. Ove
 
 - **Home:** Start from four pillar cards. Opening a pillar shows only its own preset missions; `GET /api/missions` returns all 12 presets for the app. Choose a preset or enter a custom goal.
 - **Authentication:** `/login.html` provides Firebase email/password registration and login. `GET /api/auth/config` returns the public Firebase Web config.
-- **AI Personalized Plan:** `POST /api/plans/generate` generates a validated plan from a preset mission or custom goal; `POST /api/plans/modify` revises it from a natural-language request. Both require a valid Firebase ID token.
-- **My Plan:** `POST /api/plans` validates and saves a plan for the authenticated Firebase user. `GET /api/plans` lists that user's saved plans after a later sign-in; `GET /api/plans/{plan_id}` retrieves only that user's plan; `PATCH /api/plans/{plan_id}/steps/{step_index}` updates a step; `PATCH /api/plans/{plan_id}/complete` updates overall completion. Plans and progress persist in SQLite across server restarts.
+- **AI Personalized Plan:** `POST /api/plans/generate` sends mission and preference data to GroqCloud and validates the structured response; `POST /api/plans/modify` revises it from a natural-language request. Both require a valid Firebase ID token. Explore and outing requests ask for suggested stops, approximate activity durations, rough CAD cost estimates, transportation suggestions, and preference-based explanations; current prices, opening hours, transit schedules, and exact travel times are not claimed as verified.
+- **My Plan:** `POST /api/plans/demo-seed` adds four fixed demo starter plans (one per pillar) to the authenticated user's account once; repeat requests do not create duplicates. `POST /api/plans` validates and saves an additional plan; `GET /api/plans` lists that user's plans; `GET /api/plans/{plan_id}` retrieves only that user's plan; `PATCH /api/plans/{plan_id}/steps/{step_index}` updates a step; `PATCH /api/plans/{plan_id}/complete` updates overall completion. Plans and progress persist in SQLite across server restarts.
 
 Plans contain a goal, overview, three to five actions, practical tips, relevant official links, and details to verify. The AI is instructed not to imply live verification of transit schedules, hours, prices, eligibility, or service availability. Confirm time-sensitive information directly with the linked official source.
 

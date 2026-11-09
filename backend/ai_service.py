@@ -71,26 +71,30 @@ about immigration status, accessibility, or familiarity with Canadian systems. U
 official resource URLs supplied in the user message, and include relevant ones when useful.
 Do not claim to have checked current transit schedules, business hours, prices, eligibility, or
 service availability. Clearly tell the user what details to verify and where. Do not invent
-current facts. Keep the guidance useful even if an official resource is not listed."""
+current facts. Keep the guidance useful even if an official resource is not listed.
+
+For Explore missions and requests for an outing or itinerary, organize the steps as a practical
+sequence of suggested stops. Include an approximate activity duration (not a schedule or travel
+time), a clearly labeled rough cost estimate in CAD when reasonably supportable, a transportation
+suggestion, and a short reason each stop fits the user's interests. Never invent exact prices;
+when uncertain, say to check the venue's current price. Treat all recommendations as suggestions.
+Do not invent opening hours, transit schedules, or exact travel times."""
 
 
 def _settings() -> tuple[str, str, str]:
-    api_key = os.getenv("LLM_API_KEY", "").strip()
+    api_key = os.getenv("GROQ_API_KEY", "").strip()
     if not api_key:
         raise HTTPException(
             status_code=503,
             detail=(
-                "AI setup required: add your provider API key as LLM_API_KEY in the "
+                "AI setup required: add your GroqCloud API key as GROQ_API_KEY in the "
                 "project's .env file, then restart RoamTO."
             ),
         )
-    base_url = os.getenv(
-        "LLM_BASE_URL",
-        "https://generativelanguage.googleapis.com/v1beta/openai",
-    ).strip().rstrip("/")
-    model = os.getenv("LLM_MODEL", "gemini-3.8-flash").strip()
-    if not base_url or not model:
-        raise HTTPException(status_code=503, detail="AI setup required: configure LLM_BASE_URL and LLM_MODEL.")
+    base_url = "https://api.groq.com/openai/v1"
+    model = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b").strip()
+    if not model:
+        raise HTTPException(status_code=503, detail="AI setup required: configure GROQ_MODEL.")
     return api_key, base_url, model
 
 
@@ -106,21 +110,6 @@ def _decode_content(raw_content: str) -> dict[str, Any]:
     return decoded
 
 
-def _provider_error_message(response: httpx.Response) -> str:
-    try:
-        body = response.json()
-    except ValueError:
-        return ""
-    entries = body if isinstance(body, list) else [body]
-    for entry in entries:
-        if not isinstance(entry, dict):
-            continue
-        error = entry.get("error", entry)
-        if isinstance(error, dict) and isinstance(error.get("message"), str):
-            return error["message"].strip()[:500]
-    return ""
-
-
 async def _request_plan(user_prompt: str) -> PlanContent:
     api_key, base_url, model = _settings()
     try:
@@ -131,6 +120,7 @@ async def _request_plan(user_prompt: str) -> PlanContent:
                 json={
                     "model": model,
                     "temperature": 0.4,
+                    "response_format": {"type": "json_object"},
                     "messages": [
                         {"role": "system", "content": SYSTEM_PROMPT},
                         {"role": "user", "content": user_prompt},
@@ -140,39 +130,49 @@ async def _request_plan(user_prompt: str) -> PlanContent:
             response.raise_for_status()
             payload = response.json()
     except httpx.TimeoutException as exc:
-        raise HTTPException(status_code=504, detail="The AI provider took too long to respond. Please try again.") from exc
+        raise HTTPException(status_code=504, detail="Groq took too long to respond. Please try again.") from exc
     except httpx.HTTPStatusError as exc:
-        if exc.response.status_code == 503:
-            provider_message = _provider_error_message(exc.response)
-            detail = "The AI provider is temporarily unavailable. Please try again later."
-            if provider_message:
-                detail = f"The AI provider is temporarily unavailable: {provider_message}"
-            raise HTTPException(status_code=503, detail=detail) from exc
+        if exc.response.status_code == 429:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Groq usage limit reached or requests are arriving too quickly. "
+                    "Wait for the limit to refresh, then try again. Check your Groq Console "
+                    "Limits page to see the current quota and reset time."
+                ),
+            ) from exc
+        if exc.response.status_code in (401, 403):
+            raise HTTPException(
+                status_code=503,
+                detail="Groq authentication failed. Check GROQ_API_KEY in your .env file.",
+            ) from exc
+        if exc.response.status_code >= 500:
+            raise HTTPException(
+                status_code=503,
+                detail="Groq is temporarily unstable or unavailable. Please wait a moment and try again.",
+            ) from exc
         raise HTTPException(
             status_code=502,
-            detail=(
-                f"The AI provider returned HTTP {exc.response.status_code}. "
-                "Check your API key, model, and provider quota."
-            ),
+            detail="Groq could not process the request. Check the configured model and try again.",
         ) from exc
     except httpx.RequestError as exc:
-        raise HTTPException(status_code=502, detail="Could not connect to the configured AI provider.") from exc
+        raise HTTPException(status_code=502, detail="Could not connect to Groq. Please try again.") from exc
     except ValueError as exc:
-        raise HTTPException(status_code=502, detail="The AI provider returned an unreadable response.") from exc
+        raise HTTPException(status_code=502, detail="Groq returned an unreadable response.") from exc
 
     try:
         raw_content = payload["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError) as exc:
-        raise HTTPException(status_code=502, detail="The AI provider response did not contain a plan.") from exc
+        raise HTTPException(status_code=502, detail="Groq's response did not contain a plan.") from exc
     if not isinstance(raw_content, str):
-        raise HTTPException(status_code=502, detail="The AI provider returned an invalid plan response.")
+        raise HTTPException(status_code=502, detail="Groq returned an invalid plan response.")
     decoded = _decode_content(raw_content)
     try:
         return PlanContent.model_validate(decoded)
     except ValidationError as exc:
         raise HTTPException(
             status_code=502,
-            detail="The AI response did not meet the required plan format. Please try again.",
+            detail="Groq's response did not meet the required plan format. Please try again.",
         ) from exc
 
 
