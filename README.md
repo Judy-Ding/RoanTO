@@ -20,7 +20,7 @@ While RoamTO is still a prototype, our vision is to develop specialized AI agent
 
 What feels routine after a few months can feel unfamiliar on the first day. How do I prepare for my first TTC trip? Which library services fit my needs? Where can I start looking for newcomer support or an activity near home?
 
-Answers may be spread across transit, library, municipal, and service-provider websites. Unfamiliar terminology, language barriers, and limited neighbourhood knowledge can make it difficult to decide which information applies and what to do next. A collection of links also does not provide a personal record of what has been completed.
+Answers may be fragmented and spread across transit, library, municipal, and service-provider websites. Unfamiliar terminology, language barriers, and limited neighbourhood knowledge can make it difficult to decide which information applies and what to do next. A collection of links also does not provide a personal record of what has been completed.
 
 RoamTO addresses this gap with **customized advice, manageable next steps, and saved progress**, organized around four areas of newcomer life: Navigate, Settle, Explore, and Connect. It centralizes personal planning and follow-through; it does not replace official services or aggregate all local information in real time.
 
